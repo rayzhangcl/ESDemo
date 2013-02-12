@@ -24,6 +24,7 @@ import org.apache.http.util.EntityUtils;
 
 import com.google.gson.Gson;
 
+
 public class ESClient {
 	// Http Connector
 	private HttpClient httpclient = new DefaultHttpClient();
@@ -31,18 +32,19 @@ public class ESClient {
 	// JSON Utilities
 	private Gson gson = new Gson();
 
-	// POST Request
+	// POST/GET Request
 	HttpPost httpPost = new HttpPost("http://cmput301.softwareprocess.es:8080/testing/recipes");
+	HttpGet getRequest = new HttpGet("http://cmput301.softwareprocess.es:8080/testing/recipes/S4bRPFsuSwKUDSJImbCE2g?pretty=1");//S4bRPFsuSwKUDSJImbCE2g?pretty=1
 
 	/**
-	 * A simple recipe
+	 * create a simple recipe
 	 * @return
 	 */
 	private Recipe initializeRecipe() {
 
 		Recipe r = new Recipe();
 		r.setUser("Jason");
-		r.setName("Cheese Cake");
+		r.setName("Burger");
 		ArrayList<String> ingredients = new ArrayList<String>();
 		ingredients.add("egg");
 		ingredients.add("cheese");
@@ -58,27 +60,25 @@ public class ESClient {
 	 */
 	public void getRecipe(){
 		try{
-		HttpGet getRequest = new HttpGet("http://cmput301.softwareprocess.es:8080/testing/recipes/S4bRPFsuSwKUDSJImbCE2g?pretty=1");
-		getRequest.addHeader("Accept","application/json");
 
-		HttpResponse response = httpclient.execute(getRequest);
+			getRequest.addHeader("Accept","application/json");
 
-		if (response.getStatusLine().getStatusCode() != 200) {
-			throw new RuntimeException("Failed : HTTP error code : "
-					+ response.getStatusLine().getStatusCode());
-		}
+			HttpResponse response = httpclient.execute(getRequest);
 
-		BufferedReader br = new BufferedReader(
-				new InputStreamReader((response.getEntity().getContent())));
+			String status = response.getStatusLine().toString();
+			System.out.println(status);
 
-		String output;
-		System.out.println("Output from Server -> ");
-		
-		while ((output = br.readLine()) != null) {
-			System.out.println(output);
-		}		
+			BufferedReader br = new BufferedReader(
+					new InputStreamReader((response.getEntity().getContent())));
 
-		getRequest.releaseConnection();
+			String output;
+			System.out.println("Output from Server -> ");
+
+			while ((output = br.readLine()) != null) {
+				System.out.println(output);
+			}		
+
+			getRequest.releaseConnection();
 
 		} catch (ClientProtocolException e) {
 
@@ -120,27 +120,6 @@ public class ESClient {
 		HttpEntity entity = response.getEntity();
 
 		System.out.println(status);
-
-		BufferedReader rd = null;
-		try {
-			rd = new BufferedReader(new InputStreamReader(entity.getContent()));
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String line;
-		System.out.println("The inserted recipe is -> ");
-		try {
-			while ((line = rd.readLine()) != null) {
-				System.out.println(line);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
 		try {
 			EntityUtils.consume(entity);
