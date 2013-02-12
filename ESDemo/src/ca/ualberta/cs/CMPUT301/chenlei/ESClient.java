@@ -56,6 +56,20 @@ public class ESClient {
 		return r;
 	}
 
+	String getEntityContent(HttpResponse response) throws IOException {
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader((response.getEntity().getContent())));
+        String output;
+        System.err.println("Output from Server -> ");
+        String json = "";
+        while ((output = br.readLine()) != null) {
+            System.err.println(output);
+            json += output;
+        }
+        System.err.println("JSON:"+json);
+        return json;
+	}
+	
 	/**
 	 * Consumes the Get operation of the service
 	 */
@@ -74,12 +88,8 @@ public class ESClient {
 
 			String output;
 			System.out.println("Output from Server -> ");
-			String json = "";
-			while ((output = br.readLine()) != null) {
-				System.out.println(output);
-				json += output;
-			}
-			System.out.println("JSON:"+json);
+			String json = getEntityContent(response);
+
 			// We have to tell GSON what type we expect
 			Type elasticSearchResponseType = new TypeToken<ElasticSearchResponse<Recipe>>(){}.getType();
 			// Now we expect to get a Recipe response
@@ -139,14 +149,39 @@ public class ESClient {
 		httpPost.releaseConnection();
 	}
 
+	public void searchRecipes(String str) throws ClientProtocolException, IOException {
+	    HttpGet searchRequest = new HttpGet("http://cmput301.softwareprocess.es:8080/testing/recipes/_search?pretty=1&q=" +
+	            java.net.URLEncoder.encode(str,"UTF-8"));
+	    searchRequest.setHeader("Accept","application/json");
+	    HttpResponse response = httpclient.execute(searchRequest);
+        String status = response.getStatusLine().toString();
+        String json = getEntityContent(response);
+        System.err.println(json);
+        Type elasticSearchSearchResponseType = new TypeToken<ElasticSearchSearchResponse<Recipe>>(){}.getType();
+        ElasticSearchSearchResponse<Recipe> esResponse = gson.fromJson(json, elasticSearchSearchResponseType);
+        System.err.println(esResponse);
+        for (ElasticSearchResponse<Recipe> r : esResponse.getHits()) {
+            Recipe recipe = r.getSource();
+            System.err.println(recipe);
+        }
+
+
+
+	}
+	
 	// Main Test
-	public static void main(String...args){
+	public static void main(String [] args){
 
 		ESClient client = new ESClient();
 		Recipe recipe = client.initializeRecipe();
 		System.out.println("Recipe is -> "+ recipe.toString());
 		client.insertRecipe(recipe);
 		client.getRecipe();
+		try {
+		    client.searchRecipes("egg");
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}	
 	}
 }
 
