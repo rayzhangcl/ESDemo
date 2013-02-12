@@ -23,6 +23,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 public class ESClient {
@@ -73,11 +74,19 @@ public class ESClient {
 
 			String output;
 			System.out.println("Output from Server -> ");
-
+			String json = "";
 			while ((output = br.readLine()) != null) {
 				System.out.println(output);
-			}		
-
+				json += output;
+			}
+			System.out.println("JSON:"+json);
+			// We have to tell GSON what type we expect
+			Type elasticSearchResponseType = new TypeToken<ElasticSearchResponse<Recipe>>(){}.getType();
+			// Now we expect to get a Recipe response
+			ElasticSearchResponse<Recipe> esResponse = gson.fromJson(json, elasticSearchResponseType);
+			// We get the recipe from it!
+			Recipe recipe = esResponse.getSource();
+			System.out.println(recipe.toString());
 			getRequest.releaseConnection();
 
 		} catch (ClientProtocolException e) {
