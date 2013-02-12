@@ -7,7 +7,7 @@ public class Recipe {
 	private String name;
 	private ArrayList<String> ingredients;
 	private String directions;
-	
+
 	public Recipe(){
 		
 	}

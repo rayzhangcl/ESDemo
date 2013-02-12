@@ -4,15 +4,18 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.fluent.Content;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -23,202 +26,140 @@ import com.google.gson.Gson;
 
 public class ESClient {
 	// Http Connector
-		private HttpClient httpclient = new DefaultHttpClient();
-		
-		// JSON Utilities
-		private Gson gson = new Gson();
-		
-		
-		// POST Request
-		HttpPost httpPost = new HttpPost("http://cmput301.softwareprocess.es:8080/testing/recipe");
-		
-		/**
-		 * Sends messages to the crowd service and retrieves its responses
-		 */
-		public void testServiceMethods(){
+	private HttpClient httpclient = new DefaultHttpClient();
 
-			// Example Simple Task
-			Recipe recipe = initializeRecipe();
-			System.out.println("Recipe is -> "+ recipe.toString());
-			
-			try {
-				Recipe newR = this.insertRecipe(recipe);
-				System.out.println("Inserted Task -> " + newR.toString());
-				
-/*				Task newTClone = this.getTask(newT.getId());
-				System.out.println("Double Checking by Listing -> " + newTClone.getId());
-				
-				String lot= this.listTasks();
-				System.out.println("List of Tasks in the CrowdSourcer -> " + lot);*/
+	// JSON Utilities
+	private Gson gson = new Gson();
 
-			} 
-			catch(Exception e){
-				e.printStackTrace();
+	// POST Request
+	HttpPost httpPost = new HttpPost("http://cmput301.softwareprocess.es:8080/testing/recipes");
+
+	/**
+	 * A simple recipe
+	 * @return
+	 */
+	private Recipe initializeRecipe() {
+
+		Recipe r = new Recipe();
+		r.setUser("Jason");
+		r.setName("Cheese Cake");
+		ArrayList<String> ingredients = new ArrayList<String>();
+		ingredients.add("egg");
+		ingredients.add("cheese");
+		ingredients.add("flour");
+		r.setIngredients(ingredients);
+		r.setDirections("mix and bake");
+
+		return r;
+	}
+
+	/**
+	 * Consumes the Get operation of the service
+	 */
+	public void getRecipe(){
+		try{
+		HttpGet getRequest = new HttpGet("http://cmput301.softwareprocess.es:8080/testing/recipes/S4bRPFsuSwKUDSJImbCE2g?pretty=1");
+		getRequest.addHeader("Accept","application/json");
+
+		HttpResponse response = httpclient.execute(getRequest);
+
+		if (response.getStatusLine().getStatusCode() != 200) {
+			throw new RuntimeException("Failed : HTTP error code : "
+					+ response.getStatusLine().getStatusCode());
+		}
+
+		BufferedReader br = new BufferedReader(
+				new InputStreamReader((response.getEntity().getContent())));
+
+		String output;
+		System.out.println("Output from Server -> ");
+		
+		while ((output = br.readLine()) != null) {
+			System.out.println(output);
+		}		
+
+		getRequest.releaseConnection();
+
+		} catch (ClientProtocolException e) {
+
+			e.printStackTrace();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Consumes the POST/Insert operation of the service
+	 */
+	public void insertRecipe(Recipe recipe){
+
+		StringEntity stringentity = null;
+		try {
+			stringentity = new StringEntity(gson.toJson(recipe));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		httpPost.setHeader("Accept","application/json");
+
+		httpPost.setEntity(stringentity);
+		HttpResponse response = null;
+		try {
+			response = httpclient.execute(httpPost);
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		String status = response.getStatusLine().toString();
+		HttpEntity entity = response.getEntity();
+
+		System.out.println(status);
+
+		BufferedReader rd = null;
+		try {
+			rd = new BufferedReader(new InputStreamReader(entity.getContent()));
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String line;
+		System.out.println("The inserted recipe is -> ");
+		try {
+			while ((line = rd.readLine()) != null) {
+				System.out.println(line);
 			}
-			finally {
-			    httpPost.releaseConnection();
-			}
-		}
-		
-		/**
-		 * Initializes a simple mock task
-		 * @return
-		 */
-		private Recipe initializeRecipe() {
-			
-			Recipe r = new Recipe();
-			r.setUser("Jack");
-			r.setName("Cupcake");
-			ArrayList<String> ingredients = new ArrayList<String>();
-			ingredients.add("egg");
-			ingredients.add("milk");
-			r.setIngredients(ingredients);
-			r.setDirections("mix and bake");
-			
-			return r;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
-		/*
-		 * To convert the InputStream to String we use the BufferedReader.readLine()
-		 * method. We iterate until the BufferedReader return null which means
-		 * there's no more data to read. Each line will appended to a StringBuilder
-		 * and returned as String.
-		 * (c) public domain: http://senior.ceng.metu.edu.tr/2009/praeda/2009/01/11/a-simple-restful-client-at-android/
-		 */
-		private  String convertStreamToString(InputStream is) {
-			
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-			StringBuilder sb = new StringBuilder();
-
-			String line = null;
-			try {
-				while ((line = reader.readLine()) != null) {
-					sb.append(line + "\n");
-				}
-			} 
-			catch (IOException e) {
-				e.printStackTrace();
-			} 
-			finally {
-				try {
-					is.close();
-				} 
-				catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			return sb.toString();
+		try {
+			EntityUtils.consume(entity);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
-		/**
-		 * Consumes the LIST operation of the service
-		 * @return JSON representation of the task list
-		 * @throws Exception
-		 */
-/*		public String listTasks() throws Exception{
-			
-			String jsonStringVersion = new String();
-			List <BasicNameValuePair> nvps = new ArrayList <BasicNameValuePair>();
-			nvps.add(new BasicNameValuePair("action", "list"));
-			
-			httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-			HttpResponse response = httpclient.execute(httpPost);
-		    
-		    String status = response.getStatusLine().toString();
-		    HttpEntity entity = response.getEntity();
-		    
-		    System.out.println(status);
-		    
-		    if (entity != null) {
-		        InputStream is = entity.getContent();
-		        jsonStringVersion = convertStreamToString(is);
-		    }
-		    
-		    // and ensure it is fully consumed
-		    EntityUtils.consume(entity);
-		    return jsonStringVersion;
-		}*/
-		
-		/**
-		 * Consumes the GET operation of the service
-		 * @return Task object given the id idP
-		 * @throws Exception
-		 */
-/*		public Task getTask(String idP) throws Exception{
-			
-			Task responseTask = new Task();
-			List <BasicNameValuePair> nvps = new ArrayList <BasicNameValuePair>();
-			nvps.add(new BasicNameValuePair("action", "get"));
-			nvps.add(new BasicNameValuePair("id", idP));
-			
-			httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-			HttpResponse response = httpclient.execute(httpPost);
-		    
-		    String status = response.getStatusLine().toString();
-		    HttpEntity entity = response.getEntity();
-		    
-		    System.out.println(status);
-		    
-		    if (entity != null) {
-		        InputStream is = entity.getContent();
-		        String jsonStringVersion = convertStreamToString(is);
-		        Type taskType = Task.class;     
-		        responseTask = gson.fromJson(jsonStringVersion, taskType);
-		    }
-		    EntityUtils.consume(entity);
-	        return responseTask;
-		    
-		}*/
-		   
-		/**
-		 * Consumes the POST/Insert operation of the service
-		 * @return JSON representation of the task created
-		 * @throws Exception
-		 */
-		public Recipe insertRecipe(Recipe taskP) throws Exception{
-			
-			Recipe newTask = new Recipe();
-			//List <BasicNameValuePair> nvps = new ArrayList <BasicNameValuePair>();
-			//nvps.add(new BasicNameValuePair("action", "post"));
-			//nvps.add(new BasicNameValuePair("summary", taskP.getSummary()));
-			//nvps.add(new BasicNameValuePair("1", gson.toJson(taskP)));
-			
-			StringEntity stringentity = new StringEntity(gson.toJson(taskP));
-			stringentity.setContentType("application/json");
+		httpPost.releaseConnection();
+	}
 
-			//httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-			httpPost.setEntity(stringentity);
-			HttpResponse response = httpclient.execute(httpPost);
-		    
-		    String status = response.getStatusLine().toString();
-		    HttpEntity entity = response.getEntity();
-		    
-		    System.out.println(status);
-		    
-/*		    if (entity != null) {
-		        InputStream is = entity.getContent();
-		        String jsonStringVersion = convertStreamToString(is);
-		        Type taskType = Recipe.class;     
-		        newTask = gson.fromJson(jsonStringVersion, taskType);
-		    }*/
-		    BufferedReader rd = new BufferedReader(new InputStreamReader(entity.getContent()));
-		    String line;
-		    System.out.println("The inserted recipe is -> ");
-		    while ((line = rd.readLine()) != null) {
-		       System.out.println(line);
-		    }
+	// Main Test
+	public static void main(String...args){
 
-		    
-		    EntityUtils.consume(entity);
-	        return newTask;
-		}
-		
-		// Main Test
-		public static void main(String...args){
-			
-			ESClient client = new ESClient();
-			client.testServiceMethods();
-		}
+		ESClient client = new ESClient();
+		Recipe recipe = client.initializeRecipe();
+		System.out.println("Recipe is -> "+ recipe.toString());
+		client.insertRecipe(recipe);
+		client.getRecipe();
+	}
 }
 
 
