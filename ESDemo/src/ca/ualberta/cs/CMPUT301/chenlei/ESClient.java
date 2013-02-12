@@ -164,9 +164,6 @@ public class ESClient {
             Recipe recipe = r.getSource();
             System.err.println(recipe);
         }
-
-
-
 	}
 	
 	// Main Test
