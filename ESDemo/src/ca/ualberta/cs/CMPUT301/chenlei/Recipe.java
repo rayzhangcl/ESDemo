@@ -3,6 +3,7 @@ package ca.ualberta.cs.CMPUT301.chenlei;
 import java.util.ArrayList;
 
 public class Recipe {
+	private String id;
 	private String user;
 	private String name;
 	private ArrayList<String> ingredients;
@@ -12,13 +13,22 @@ public class Recipe {
 		
 	}
 
-	public Recipe(String user, String name, ArrayList<String> ingredients,
+	public Recipe(String id, String user, String name, ArrayList<String> ingredients,
 			String directions) {
 		super();
+		this.id = id;
 		this.user = user;
 		this.name = name;
 		this.ingredients = ingredients;
 		this.directions = directions;
+	}
+	
+	public String getId() {
+		return id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getUser() {
@@ -55,7 +65,7 @@ public class Recipe {
 
 	@Override
 	public String toString() {
-		return "Recipe [user=" + user + ", name=" + name + ", ingredients="
+		return "Recipe [id=" + id + ", user=" + user + ", name=" + name + ", ingredients="
 				+ ingredients + ", directions=" + directions + "]";
 	}
 	
