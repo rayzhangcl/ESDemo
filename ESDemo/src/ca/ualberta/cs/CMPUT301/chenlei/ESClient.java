@@ -187,10 +187,10 @@ public class ESClient {
 
 
 	/**
-	 * advanced search (logical operators)
+	 * update a field in a recipe
 	 */
 	public void updateRecipes(String str) throws ClientProtocolException, IOException {
-		HttpPost updateRequest = new HttpPost("http://cmput301.softwareprocess.es:8080/testing/lab02/999/_update");
+		HttpPost updateRequest = new HttpPost("http://cmput301.softwareprocess.es:8080/testing/lab02/1/_update");
 		String query = 	"{\"script\" : \"ctx._source." + str + "}";
 		StringEntity stringentity = new StringEntity(query);
 
@@ -209,7 +209,7 @@ public class ESClient {
 	 * delete an entry specified by the id
 	 */
 	public void deleteRecipe() throws IOException {
-		HttpDelete httpDelete = new HttpDelete("http://cmput301.softwareprocess.es:8080/testing/lab02/2");
+		HttpDelete httpDelete = new HttpDelete("http://cmput301.softwareprocess.es:8080/testing/lab02/1");
 		httpDelete.addHeader("Accept","application/json");
 
 		HttpResponse response = httpclient.execute(httpDelete);
@@ -276,7 +276,7 @@ public class ESClient {
 
 
 		//advanced search
-		/*		try {
+/*		try {
 			client.searchsearchRecipes("cheese AND egg");
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -287,7 +287,7 @@ public class ESClient {
 		}*/
 
 		//update a new field
-		/*		try {
+/*				try {
 			client.updateRecipes("directions = \\\"chop and fry\\\"\"");
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
